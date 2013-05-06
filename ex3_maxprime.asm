@@ -54,7 +54,7 @@ SH4,	HEX 0
 	BUN SH4 I	/ return from SH4
 / end if sub routine
 LAST,	DEC 1		/ M[LAST] : the biggest prime number that is not exceed N
-N,	DEC 40000	/ M[N] = 40000
+N,	DEC 32770	/ M[N] = 32770
 X,	DEC 1		/ M[X] = 1
 Y,	DEC 1		/ M[Y] = 1
 T,	DEC 0		/ temp
