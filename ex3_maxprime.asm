@@ -1,4 +1,4 @@
-  ORG 10	/ start
+  	ORG 10		/ start
 	LDA N
 	STA X
 	CIR
@@ -11,7 +11,7 @@ LOP1,	CLA
 	LDA Y		/ AC <- M[Y]
 	CMA		/ AC <- ~AC
 	INC		/ AC <- AC + 1 (AC = -M[Y])
-	ADD X 	/ AC <- AC + M[X] (AC <- M[X] - M[Y])	
+	ADD X 		/ AC <- AC + M[X] (AC <- M[X] - M[Y])	
 	STA X		/ X <- AC
 	SNA		/ if (AC < 0) then skip next step
 	STA R		/ M[R] <- AC
@@ -20,7 +20,7 @@ LOP1,	CLA
 	LDA R
 	SZA		/ if R = 0 then X is not a prime, skip next step
 	BUN LOP2	/ if R != 0 then test with Y = Y - 1
-	BUN LOP	/ R = 0 run LOP to check if Y = 1 or not
+	BUN LOP		/ R = 0 run LOP to check if Y = 1 or not
 / loop 2: Y --, load N to X, test N/(Y-1)
 LOP2,	LDA Y
 	BSA SH4
