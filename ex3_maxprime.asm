@@ -34,7 +34,7 @@ LOP2,	LDA Y
 / R = 0 then firstly check that if Y = 1 or not
 LOP,	LDA N
 	STA LAST
-	BSA SH4	/ N = N - 1, AC = M[N] - 1
+	BSA SH4		/ N = N - 1, AC = M[N] - 1
 	STA N		/ M[N] <- AC
 	STA X
 	CIR
