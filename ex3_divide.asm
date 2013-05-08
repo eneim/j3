@@ -9,7 +9,6 @@ LOP,	STA R		/ M[R] <- AC
 	ISZ P		/ M[P]++
 	SNA		/ if (AC < 0) then skip next step
 	BUN LOP		/ goto to LOP
-	CLA		/ AC <- 0	
 	LDA P		/ AC <- M[P]
 	ADD S1		/ AC <- AC - 1
 	STA P		/ M[P] <- AC
