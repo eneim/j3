@@ -54,7 +54,7 @@ RE_Y,	HEX 0
 	STA Y
 	BUN RE_Y I
 
-/ end if sub routine
+/ init
 LAST,	DEC 0		/ M[LAST] : the biggest prime number that does not exceed N
 N,	DEC 690		/ M[N] = 690, MAX N = 32770
 X,	DEC 1		/ M[X] = 1
