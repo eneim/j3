@@ -11,7 +11,7 @@ MAIN,	ADD M2		/ AC <- M[Y] - 2 (to check if Y >= 2 or not)
 	// if R = 0 then check if Y = 1 -> finish, if Y > 1: N <- N - 1, goto MAIN
 	// if R != 0 then Y <- Y - 1, goto MAIN
 	SZA		/ if R = 0 then skip next step
-	BSA RE_Y	/ R != 0 (R < Y do Y > 1) then Y <- Y - 1, goto MAIN
+	BSA RE_Y	/ R != 0 (R < Y -> Y > 1) then Y <- Y - 1, goto MAIN
 	// R = 0 then N <- N - 1, check Y and goto MAIN or HALT
 	BSA RE_N
 	LDA Y 		/ Load AC <- Y to check if Y > 1 or not
