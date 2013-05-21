@@ -1,0 +1,101 @@
+1.      wire          com_rst    = (com_ctl == `COM_RST); /// reset (pc, sc, ar, 1-bit FFs)
+
+2.      reg_lci     #12 PC   (clk, ~com_stop, bus_data[11:0], pc, pc_ld | com_rst, pc_clr, pc_inr);
+
+  2.1   /*********************** load/clear/increment/clock-enable register model *************************/
+  
+        module reg_lci (clk, en, din, dout, ld, clr, inr);
+
+        parameter DATA_WIDTH = 16;
+
+            input clk;          /// clock
+            input en;           /// clock enable
+            input ld;           /// load
+            input clr;          /// clear
+            input inr;          /// increment
+            input  [DATA_WIDTH - 1:0] din;   /// data input
+            output [DATA_WIDTH - 1:0] dout;  /// data output
+
+            wire   [DATA_WIDTH - 1:0] dout_nxt; /// not connected to output
+
+            reg_lci_nxt #(DATA_WIDTH) R0 (clk, en, din, dout, dout_nxt, ld, clr, inr);
+
+        endmodule
+        
+        /// reg_lci_nxt has same functionality as reg_lci, but also outputs dout_nxt (dout at next clock)
+
+        module reg_lci_nxt (clk, en, din, dout, dout_nxt, ld, clr, inr);
+
+        parameter DATA_WIDTH = 16;
+
+            input clk;          /// clock
+            input en;           /// clock enable
+            input ld;           /// load
+            input clr;          /// clear
+            input inr;          /// increment
+            input  [DATA_WIDTH - 1:0] din;       /// data input
+            output [DATA_WIDTH - 1:0] dout;      /// data output
+            output [DATA_WIDTH - 1:0] dout_nxt;  /// data output at the next cycle
+
+            assign dout_nxt = (clr) ? 0 : (ld) ? din : (inr) ? dout + 1 : dout;
+
+            reg_dff #(DATA_WIDTH) R0 (clk, en, dout_nxt, dout);
+        endmodule
+
+        /*********************** clock-enable register model *************************/
+
+        module reg_dff (clk, en, din, dout);
+
+        parameter DATA_WIDTH = 16;
+
+            input clk;                      /// clock
+            input en;                       /// enable
+            input  [DATA_WIDTH - 1:0] din;  /// data input
+            output [DATA_WIDTH - 1:0] dout; /// data output
+
+            reg    [DATA_WIDTH - 1:0] dout;
+
+            always @ (posedge clk)
+              if(en) dout <= din;         /// update dout only when (en == 1)
+        endmodule
+        
+        /*****************************************************************************/
+        
+        com_rst = (com_ctl == 'COM_RST) = 1
+        pc_ld | com_rst = 1
+        reg_lci <- ld = 1
+        reg_lci_nxt <- dout_nxt = (clr) ? 0 : din // din = bus_data
+        
+  2.2   bus    BUS (bus_ctl, `PROGRAM_ENTRY_POINT, {4'b0, ar}, {4'b0, pc}, dr, ac, ir, 16'b0, mem_data, bus_data);
+  
+    2.2.1
+    
+        /*********************** 8-master bus model *************************/
+
+        module bus (bus_ctl, b0, b1, b2, b3, b4, b5, b6, b7, bout);
+
+        parameter DATA_WIDTH = 16;
+
+            input  [2:0]  bus_ctl;
+            input  [DATA_WIDTH - 1:0] b0, b1, b2, b3, b4, b5, b6, b7;
+            output [DATA_WIDTH - 1:0] bout;
+
+            reg    [DATA_WIDTH - 1:0] bout; /// bout is reg-type but is actually combinational
+
+            always @ (bus_ctl or b0 or b1 or b2 or b3 or b4 or b5 or b6 or b7) begin
+              case (bus_ctl)
+                    3'b000 : bout = b0;
+                    3'b001 : bout = b1;
+                    3'b010 : bout = b2;
+                    3'b011 : bout = b3;
+                    3'b100 : bout = b4;
+                    3'b101 : bout = b5;
+                    3'b110 : bout = b6;
+                    3'b111 : bout = b7;
+                  endcase
+              end
+        endmodule
+        
+        /********************************************************************/
+        
+        
