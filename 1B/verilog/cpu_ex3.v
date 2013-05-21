@@ -1,4 +1,3 @@
-
 `include "def_ex3.v"
 
 module cpu_ex3 (clk, com_ctl, com_addr,
@@ -40,7 +39,7 @@ module cpu_ex3 (clk, com_ctl, com_addr,
     wire          e_nxt, i15, r_nxt, ien_nxt, s_nxt, iot_nxt;
     wire   [3:0]  imsk_nxt;
     wire   [1:0]  fgi_nxt, fgo_nxt, fgi_set, fgo_set;
-  wire   [7:0]  inpr;
+    wire   [7:0]  inpr;
 
     wire          ar_ld, ar_inr, ar_clr;
     wire          pc_ld, pc_inr, pc_clr;
