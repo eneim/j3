@@ -97,5 +97,27 @@
         endmodule
         
         /********************************************************************/
+       
+    2.2.2
+    
+        assign bus_ctl[0]  = bus_ar | bus_dr | bus_ir | bus_mem;  /// b1 | b3 | b5 | b7
+        assign bus_ctl[1]  = bus_pc | bus_dr | bus_mem;           /// b2 | b3 | b7
+        assign bus_ctl[2]  = bus_ac | bus_ir | bus_mem;           /// b4 | b5 | b7
         
-        
+    2.2.3
+    
+        wire bus_ar    = d[4] & t[4]          |   /// BUN @ t[4] : pc <- ar;
+                         d[5] & t[5];             /// BSA @ t[5] : pc <- ar;
+        wire bus_pc    = ~r & t[0] & ~com_rst |   /// fetch @ t[0] : ar <- pc; (com_rst = 0)
+                         r & t[1]             |   /// interrupt @ t[1] : mem[ar] <- pc;
+                         d[5] & t[4];             /// BSA @ t[4] : mem[ar] <- pc;
+        wire bus_dr    = d[6] & t[6];             /// ISZ @ t[6] : mem[ar] <- dr;
+        wire bus_ac    = d[3] & t[4]          |   /// STA @ t[4] : mem[ar] <- ac;
+                         pt & ir[10];             /// OUT : outr <- ac[7:0]
+        wire bus_ir    = ~r & t[2];               /// fetch @ t[2] : ar <- ir[11:0];
+        wire bus_mem   = ~r & t[1]            |   /// fetch @ t[1] : ir <- mem[ar];
+                         ~d[7] & i15 & t[3]   |   /// indirect : ar <- mem[ar];
+                         d[0] & t[4]          |   /// AND @ t[4] : dr <- mem[ar];
+                         d[1] & t[4]          |   /// ADD @ t[4] : dr <- mem[ar];
+                         d[2] & t[4]          |   /// LDA @ t[4] : dr <- mem[ar];
+                         d[6] & t[4];             /// ISZ @ t[4] : dr <- mem[ar];
