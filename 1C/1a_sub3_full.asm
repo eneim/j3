@@ -12,7 +12,7 @@ INI, / initialize data
 		STA BYE			/ M[BYE] <- 0
 		STA NXT_BYE		/ M[NXT_BYE] <- 0
 		/STA X			/ M[X] <- 0
-		LDA CH_CR		/ AC <- '='
+		LDA CH_NL		/ AC <- '='
 		STA OPR			/ M[OPR] <- '='
 		BSA INI_ST		/ call INI_ST (initialize state)
 		ION				/ enable interrupt
@@ -150,9 +150,9 @@ CHK_CH,	HEX 0			/ return address
 
 STT_1,	/ cur-operator : M[TMI]
 / (cur-operator = '\r') ?
-		LDA CH_CR		/ AC <- M[CH_CR] ('\r')
+		LDA CH_NL		/ AC <- M[CH_CR] ('\r')
 		BSA CHK_CH		/ call CHK_CH (check character)
-		SZA				/ (AC = 0) ? skip next (not white-space)
+		SZA				/ (AC = 0) ? skip next (not enter)
 		BUN CHK_OP		/ goto STT_WS (handle white-space)
 / (cur-operator is unsupported... : prepare to terminate this program)
 		LDA VH1			/ AC <- M[VH1] (1)
@@ -161,6 +161,13 @@ STT_1,	/ cur-operator : M[TMI]
 		BSA SET_MSG		/ call SET_MSG (set message info)
 		BUN PRP_OUT
 STT_CR,
+/ swap M[OPR] (prev-operator) <-> M[TMI] (cur-operator)
+		LDA OPR			/ AC     <- M[OPR]
+		STA TMA			/ M[TMA] <- M[OPR]
+		LDA TMI			/ AC     <- M[TMI]
+		STA OPR			/ M[OPR] <- M[TMI]
+		LDA TMA			/ AC     <- M[TMA]
+		STA TMI			/ M[TMI] <- M[TMA]
 		LDA Y_PD		/ AC <- M[Y_PD]
 		SZA				/ (M[Y_PD] = 0) ? skip next
 		BUN CHK_OP		/ goto CHK_OP (check prev-operator)
@@ -172,7 +179,7 @@ CHK_OP,
 		CLA				/ AC     <- 0
 		STA TMA			/ M[TMA] <- 0 (skip-output flag = 0)
 / (prev-operator = '=') ?
-		LDA CH_CR		/ AC <- M[CH_EQ] ('=')
+		LDA CH_NL		/ AC <- M[CH_EQ] ('=')
 		BSA CHK_CH		/ call CHK_CH
 		SZA				/ (AC = 0) ? skip next
 		BUN C_CR		/ goto C_CR (compute EQUAL)
@@ -180,8 +187,8 @@ CHK_OP,
 		BUN C_NONE		/ goto C_NONE (unsupported operator)
 C_CR,	/ EQUAL : M[Z] <- M[Y]
 		ISZ TMA			/ ++M[TMA] (no skip) : skip-output flag = 1
-		LDA Y			/ AC     <- M[Y]
-		BUN STA_Z		/ goto STA_Z
+		/LDA Y			/ AC     <- M[Y]
+		BUN SET_OUT		/ goto STA_Z
 C_NONE, 
 		CLA				/ AC <- 0 (just for now...)
 STA_Z,	
@@ -228,16 +235,16 @@ READ_HX,HEX 0			/ return addess
 		LDA CH_NL		/ AC <- M[CH_NL] ('\n')
 		BSA CHK_CH		/ call CHK_CH
 		SZA				/ (AC = 0) ? skip next
-		BUN CONV_EQ		/ goto CONV_EQ (convert to EQUAL)
+		BUN CONV_NL		/ goto CONV_EQ (convert to EQUAL)
 		LDA CH_CR		/ AC <- M[CH_CR] ('\r')
 		BSA CHK_CH		/ call CHK_CH
 		SZA				/ (AC = 0) ? skip next
-		BUN CONV_EQ		/ goto CONV_EQ (convert to EQUAL)
+		BUN CONV_NL		/ goto CONV_EQ (convert to EQUAL)
 R_READ_HX,
 		LDA VM1			/ AC <- M[VM1] (-1)
 		BUN READ_HX I	/ return from RHX (not hex value)
-CONV_EQ,
-		LDA CH_EQ		/ AC <- M[CH_EQ] ('=')
+CONV_NL,
+		LDA CH_NL		/ AC <- M[CH_EQ] ('=')
 		STA TMI			/ M[TMI] <- '='
 		BUN R_READ_HX	/ goto R_READ_HX (return : not hex value)
 
