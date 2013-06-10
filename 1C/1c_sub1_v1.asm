@@ -1,21 +1,22 @@
-	ORG 0		/ interrupt entry point
-ST0,HEX 0		/ interrupt return address
-	BUN I_HND	/ goto I_HND (interrupt handler)
+		ORG 0		/ interrupt entry point
+ST0,	HEX 0		/ interrupt return address
+		BUN I_HND	/ goto I_HND (interrupt handler)
 
-	ORG 10		/ program entry point
-INI, / initialize data
+		ORG 10		/ program entry point
+INI, 	/ initialize data
 		LDA VH8			/ AC <- 1000
 		IMK				/ IMSK <- 1000 (S_IN enabled)
 		SIO				/ IOT <- 1 (serial-IO selected)
-/ initialize
+		
+		/ initialize
 		CLA				/ AC <- 0
 		STA BYE			/ M[BYE] <- 0
 		STA NXT_BYE		/ M[NXT_BYE] <- 0
-		/STA X			/ M[X] <- 0
-		LDA CH_NL		/ AC <- '='
-		STA OPR			/ M[OPR] <- '='
+		LDA CH_NL		/ AC <- '\n'
+		STA OPR			/ M[OPR] <- '\n'
 		BSA INI_ST		/ call INI_ST (initialize state)
 		ION				/ enable interrupt
+
 / wait until (M[BYE] = 1)
 L0,		
 		LDA BYE			/ AC <- M[BYE]
@@ -38,7 +39,7 @@ INI_ST,	HEX 0
 /------ end subroutine (initialize state) ------/
 
 /-------------- interrupt handler --------------/
-I_HND,	
+I_HND,
 / store AC & E to memory
 		STA BA			/ M[BA] <- AC	(store AC)
 		CIL				/ AC[0] <- E	(AC[15:1] is not important here...)
@@ -47,9 +48,7 @@ I_HND,
 /////////// state machine ///////////
 / M[OUT_STT] != 0  : output pending
 / M[STT] = 0  : read inputs (up to 5 dec digits)
-
-/ X(OLD)X -- M[STT] = 1  : read operator (+,-,= : compute, others : end program...)
-
+/ M[STT] = 1  : test next prime (?)
 / M[STT] >= 2 : output message
 / check state :
 		LDA OUT_STT		/ AC <- M[OUT_STT]
@@ -63,26 +62,28 @@ I_HND,
 		CLA				/ AC <- 0
 		INP				/ AC[7:0] <- INPR
 		STA TMI			/ M[TMI] <- INPR
-		BSA READ_HX		/ call READ_HX (read hex value to M[HXI](3:0))
+		BSA READ_DEC	/ call READ_DEC (read hex value to M[HXI](3:0))
 		SPA				/ (AC >= 0) ? skip next
-		BUN STT_1		/ goto STT_1 (non-hex input)
-/ hex input :
+		BUN CALC		/ goto CALC (invalid input || press Enter)
+/ valid input :
 / check state 0 :
 		LDA STT			/ AC <- M[STT]
-		SZA				/ (AC = 0) ? skip next
+		SZA				/ (AC = 0 - reading input) ? skip next
 		BUN ERR			/ goto ERR (error!!!)
 
-/////////// state 0: read operand 1,2 ///////////
+/////////// state 0: read Y ///////////
 		LDA Y			/ AC <- M[Y]
 		BSA MUL10
 		ADD HXI			/ AC <- AC + M[HXI]
 		STA Y			/ M[Y] <- AC
 		LDA VH1			/ AC <- M[VH1] (1)
-		STA Y_PD		/ M[Y_PD] <- 1
+		STA Y_PD		/ M[Y_PD] <- 1 - Y is pending
 		ISZ CNT			/ ((++M[CNT]) = 0) ? skip next
+
 / operand digit pending
 		BUN IRT			/ goto IRT (return from interrupt handler)
-/ goto state 1 :
+
+/ goto state 1 : calculate the max prime
 		ISZ STT			/ ++M[STT] (no skip)
 		BUN M_PRIME
 
@@ -97,7 +98,6 @@ IRT,
 /////////// error !!!! ///////////
 ERR,
 		CLA				/ AC <- 0
-		STA X			/ M[X] <- 0
 		STA Y			/ M[Y] <- 0
 		LDA A_EMG		/ AC <- M[A_EMG] (EMG)
 		BSA SET_MSG		/ call SET_MSG (set message info)
@@ -110,19 +110,19 @@ PRP_OUT,
 		IMK				/ IMSK <- 0100 (S_OUT enabled)
 		BUN IRT			/ goto IRT (return from interrupt handler)
 
-////////////////////////////////////////////////
-CEC,HEX 0
+//////////////// check end-character ///////////////
+CEC,	HEX 0
 / arg0 (AC) : output character
 / end-character = 0x4 (ctrl-D)
-	ADD VM4		/ AC <- AC - 4
-	SZA			/ (AC == 0) ? skip next
-	BUN CEC I	/ return from CEC
+		ADD VM4		/ AC <- AC - 4
+		SZA			/ (AC == 0) ? skip next
+		BUN CEC I	/ return from CEC
 / output character matches (ctrl-D)
-	LDA VM1		/ AC <- -1
-	STA STT		/ M[STT] <- -1
-	CLA			/ AC <- 0
-	IMK			/ IMSK <- 0 (all interrupts disabled)
-	BUN CEC I	/ return from CEC
+		LDA VM1		/ AC <- -1
+		STA STT		/ M[STT] <- -1
+		CLA			/ AC <- 0
+		IMK			/ IMSK <- 0 (all interrupts disabled)
+		BUN CEC I	/ return from CEC
 
 /////////// multiple by 10 ///////////
 MUL10,	HEX 0
@@ -157,12 +157,13 @@ CHK_CH,	HEX 0			/ return address
 		INC				/ AC <- AC + 1
 		BUN CHK_CH I	/ return from CHK_CH
 
-STT_1,	/ cur-operator : M[TMI]
+CALC,	/ cur-operator : M[TMI]
 / (cur-operator = '\r') ?
-		LDA CH_NL		/ AC <- M[CH_CR] ('\r')
+		LDA CH_CR		/ AC <- M[CH_CR] ('\r')
 		BSA CHK_CH		/ call CHK_CH (check character)
 		SZA				/ (AC = 0) ? skip next (not enter)
-		BUN CHK_OP		/ goto STT_WS (handle white-space)
+		BUN CHK_OP		/ goto STT_OP (handle enter)
+
 / (cur-operator is unsupported... : prepare to terminate this program)
 		LDA VH1			/ AC <- M[VH1] (1)
 		STA NXT_BYE		/ M[NXT_BYE] <- 1
@@ -174,30 +175,33 @@ CHK_OP,
 / skip-output flag = 0
 		CLA				/ AC     <- 0
 		STA TMA			/ M[TMA] <- 0 (skip-output flag = 0)
-/ (prev-operator = '=') ?
-		LDA CH_NL		/ AC <- M[CH_EQ] ('=')
+/ (prev-operator = '\r') ?
+		LDA CH_CR		/ AC <- M[CH_CR] ('\r')
 		BSA CHK_CH		/ call CHK_CH
 		SZA				/ (AC = 0) ? skip next
-		BUN C_CR		/ goto C_CR (compute EQUAL)
+		BUN C_CR		/ goto C_CR (enter -> find the max prime)
+
 / (prev-operator is unsupported) ?
 		BUN C_NONE		/ goto C_NONE (unsupported operator)
-C_CR,	/ EQUAL : M[Z] <- M[Y]
+
+C_CR,	/ Goto M_PRIME
 		ISZ TMA			/ ++M[TMA] (no skip) : skip-output flag = 1
 		BUN M_PRIME		/ goto STA_Z
+
 C_NONE, 
 		CLA				/ AC <- 0 (just for now...)
 
-SET_MSG,HEX 0
+SET_MSG,	HEX 0
 ////////// subroutine (set message info) //////////
 / arg0 (AC) : message address
-		STA PTR_MG		/ M[PTR_MG] <- arg0 (message address)
-		ADD VM1			/ AC <- arg0 - 1
-		STA TMA			/ M[TMA] <- arg0 - 1
-		LDA TMA I		/ AC <- M[M[TMA]] (M[arg0 - 1] = message count)
-		STA CNT			/ M[CNT] <- message count
-		BUN SET_MSG I	/ return from SET_MSG
+			STA PTR_MG		/ M[PTR_MG] <- arg0 (message address)
+			ADD VM1			/ AC <- arg0 - 1
+			STA TMA			/ M[TMA] <- arg0 - 1
+			LDA TMA I		/ AC <- M[M[TMA]] (M[arg0 - 1] = message count)
+			STA CNT			/ M[CNT] <- message count
+			BUN SET_MSG I	/ return from SET_MSG
 
-READ_HX,HEX 0			/ return addess
+READ_DEC,HEX 0			/ return addess
 ////////// subroutine (read hex value) //////////
 / return AC >= 0 : valid hex value in M[HXI](3:0)
 / return AC < 0  :  raw INPR value in M[TMI](7:0)
@@ -207,7 +211,7 @@ READ_HX,HEX 0			/ return addess
 		DEC 0			/ 2nd argument to CHK_DGT (offset)
 		DEC 9			/ 3rd argument to CHK_DGT (upper bound)
 		SNA				/ (AC < 0) ? skip next
-		BUN READ_HX I	/ return from RHX (M[HXI](3:0) = {0 to 9})
+		BUN READ_DEC I	/ return from RHX (M[HXI](3:0) = {0 to 9})
 / not hex value --> convert new-line (\n) and carrage-return (\r) to equal (=)
 		LDA CH_NL		/ AC <- M[CH_NL] ('\n')
 		BSA CHK_CH		/ call CHK_CH
@@ -217,13 +221,13 @@ READ_HX,HEX 0			/ return addess
 		BSA CHK_CH		/ call CHK_CH
 		SZA				/ (AC = 0) ? skip next
 		BUN CONV_NL		/ goto CONV_EQ (convert to EQUAL)
-R_READ_HX,
+R_READ_DEC,
 		LDA VM1			/ AC <- M[VM1] (-1)
-		BUN READ_HX I	/ return from RHX (not hex value)
+		BUN READ_DEC I	/ return from RHX (not hex value)
 CONV_NL,
 		LDA CH_NL		/ AC <- M[CH_EQ] ('=')
 		STA TMI			/ M[TMI] <- '='
-		BUN R_READ_HX	/ goto R_READ_HX (return : not hex value)
+		BUN R_READ_DEC	/ goto R_READ_DEC (return : not hex value)
 
 CHK_DGT,HEX 0			/ return address
 ////////// subroutine (check digit character) //////////
@@ -462,14 +466,8 @@ VM4,	DEC -4		/ VM2 = -4
 VM5,	DEC -5		/ VM5 = -5
 VM10,	DEC -10		/ VM10 = -10
 CH_0,	HEX 30		/ '0'
-CH_UA,	HEX 41		/ 'A'
-CH_LA,	HEX 61		/ 'a'
 CH_NL,	HEX 0A		/ '\n' (newline : line feed)
 CH_CR,	HEX 0D		/ '\r' (carrage return : appears on DOS)
-CH_WS,	HEX 20		/ ' ' (white space)
-CH_EQ,	HEX 3D		/ '=' (equal)
-CH_PL,	HEX 2B		/ '+' (plus)
-CH_MN,	HEX 2D		/ '-' (minus)
 A_ZMG,	SYM ZMG
 CNT_ZMG,DEC -5		/ CNT_ZMG = -5
 ZMG,	HEX 0		/ hex digit 4
