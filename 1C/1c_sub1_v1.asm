@@ -158,8 +158,8 @@ CHK_CH,	HEX 0			/ return address
 		BUN CHK_CH I	/ return from CHK_CH
 
 CALC,	/ cur-operator : M[TMI]
-/ (cur-operator = '\r') ?
-		LDA CH_CR		/ AC <- M[CH_CR] ('\r')
+/ (cur-operator = '\n') ?
+		LDA CH_NL		/ AC <- M[CH_NL] ('\n')
 		BSA CHK_CH		/ call CHK_CH (check character)
 		SZA				/ (AC = 0) ? skip next (not enter)
 		BUN CHK_OP		/ goto STT_OP (handle enter)
@@ -175,16 +175,16 @@ CHK_OP,
 / skip-output flag = 0
 		CLA				/ AC     <- 0
 		STA TMA			/ M[TMA] <- 0 (skip-output flag = 0)
-/ (prev-operator = '\r') ?
-		LDA CH_CR		/ AC <- M[CH_CR] ('\r')
+/ (prev-operator = '\n') ?
+		LDA CH_NL		/ AC <- M[CH_NL] ('\n')
 		BSA CHK_CH		/ call CHK_CH
 		SZA				/ (AC = 0) ? skip next
-		BUN C_CR		/ goto C_CR (enter -> find the max prime)
+		BUN C_NL		/ goto C_NL (enter -> find the max prime)
 
 / (prev-operator is unsupported) ?
 		BUN C_NONE		/ goto C_NONE (unsupported operator)
 
-C_CR,	/ Goto M_PRIME
+C_NL,	/ Goto M_PRIME
 		ISZ TMA			/ ++M[TMA] (no skip) : skip-output flag = 1
 		BUN M_PRIME		/ goto STA_Z
 
@@ -201,35 +201,34 @@ SET_MSG,	HEX 0
 			STA CNT			/ M[CNT] <- message count
 			BUN SET_MSG I	/ return from SET_MSG
 
-READ_DEC,HEX 0			/ return addess
-////////// subroutine (read hex value) //////////
-/ return AC >= 0 : valid hex value in M[HXI](3:0)
+READ_DEC,	HEX 0			/ return addess
+////////// subroutine (read dec value) //////////
+/ return AC >= 0 : valid dec value in M[HXI](3:0)
 / return AC < 0  :  raw INPR value in M[TMI](7:0)
 / check '0' <= M[TMI] <= '9'
-		LDA CH_0		/ AC <- M[CH_0] ('0')
-		BSA CHK_DGT		/ call CHK_DGT (check digit character)
-		DEC 0			/ 2nd argument to CHK_DGT (offset)
-		DEC 9			/ 3rd argument to CHK_DGT (upper bound)
-		SNA				/ (AC < 0) ? skip next
-		BUN READ_DEC I	/ return from RHX (M[HXI](3:0) = {0 to 9})
-/ not hex value --> convert new-line (\n) and carrage-return (\r) to equal (=)
-		LDA CH_NL		/ AC <- M[CH_NL] ('\n')
-		BSA CHK_CH		/ call CHK_CH
-		SZA				/ (AC = 0) ? skip next
-		BUN CONV_NL		/ goto CONV_EQ (convert to EQUAL)
-		LDA CH_CR		/ AC <- M[CH_CR] ('\r')
-		BSA CHK_CH		/ call CHK_CH
-		SZA				/ (AC = 0) ? skip next
-		BUN CONV_NL		/ goto CONV_EQ (convert to EQUAL)
-R_READ_DEC,
-		LDA VM1			/ AC <- M[VM1] (-1)
-		BUN READ_DEC I	/ return from RHX (not hex value)
-CONV_NL,
-		LDA CH_NL		/ AC <- M[CH_EQ] ('=')
-		STA TMI			/ M[TMI] <- '='
-		BUN R_READ_DEC	/ goto R_READ_DEC (return : not hex value)
+			LDA CH_0		/ AC <- M[CH_0] ('0')
+			BSA CHK_DGT		/ call CHK_DGT (check digit character)
+			DEC 0			/ 2nd argument to CHK_DGT (offset)
+			DEC 9			/ 3rd argument to CHK_DGT (upper bound)
+			SNA				/ (AC < 0) ? skip next
+			BUN READ_DEC I	/ return from RHX (M[HXI](3:0) = {0 to 9})
 
-CHK_DGT,HEX 0			/ return address
+/ not dec value --> read enter (\n)
+			LDA CH_NL		/ AC <- M[CH_NL] ('\n')
+			BSA CHK_CH		/ call CHK_CH
+			SZA				/ (AC = 0) ? skip next
+			BUN CONV_NL		/ goto CONV_NL
+
+R_READ_DEC,
+			LDA VM1			/ AC <- M[VM1] (-1)
+			BUN READ_DEC I	/ return from RHX (not dec value)
+
+CONV_NL,
+			LDA CH_NL		/ AC <- M[CH_NL] ('\n')
+			STA TMI			/ M[TMI] <- '='
+			BUN R_READ_DEC	/ goto R_READ_DEC (return : not dec value)
+
+CHK_DGT,	HEX 0			/ return address
 ////////// subroutine (check digit character) //////////
 / arg0 (AC) : lower bound character
 / arg1 (M[M[CHK_DGT]]) : offset
@@ -237,26 +236,29 @@ CHK_DGT,HEX 0			/ return address
 / return AC >= 0 : valid digit value in M[HXI](3:0)
 / return AC < 0  : not valid digit
 / check (M[TMI] >= lower bound)
-		CMA				/ AC <- ~AC
-		INC				/ AC <- AC + 1 (- arg0)
-		ADD	TMI			/ AC <- AC + M[TMI] (M[TMI] - arg0)
-		SPA				/ (AC = M[TMI] - arg0 >= 0) ? skip next
-		BUN R_CHK1		/ goto R_CHK1 (return : AC < 0)
-		STA TMA			/ M[TMA] <- M[TMI] - arg0
-		ADD CHK_DGT I	/ AC <- M[TMI] - arg0 + arg1
-		STA HXI			/ M[HXI] <- M[TMI] - arg0 + arg1 (actual hex value)
-		ISZ CHK_DGT		/ ++M[CHK_DGT]
+			CMA				/ AC <- ~AC
+			INC				/ AC <- AC + 1 (- arg0)
+			ADD	TMI			/ AC <- AC + M[TMI] (M[TMI] - arg0)
+			SPA				/ (AC = M[TMI] - arg0 >= 0) ? skip next
+			BUN R_CHK1		/ goto R_CHK1 (return : AC < 0)
+			STA TMA			/ M[TMA] <- M[TMI] - arg0
+			ADD CHK_DGT I	/ AC <- M[TMI] - arg0 + arg1
+			STA HXI			/ M[HXI] <- M[TMI] - arg0 + arg1 (actual hex value)
+			ISZ CHK_DGT		/ ++M[CHK_DGT]
+
 / check (M[TMI] <= upper bound)
-		LDA TMA			/ AC <- M[TMA] (M[TMI] - arg0)
-		CMA				/ AC <- ~AC
-		INC				/ AC <- AC + 1 (arg0 - M[TMI])
-		ADD CHK_DGT I	/ AC <- arg2 - arg0 - M[TMI] (if (AC < 0) then not within bound)
-		BUN R_CHK2		/ goto R_CHK2
+			LDA TMA			/ AC <- M[TMA] (M[TMI] - arg0)
+			CMA				/ AC <- ~AC
+			INC				/ AC <- AC + 1 (arg0 - M[TMI])
+			ADD CHK_DGT I	/ AC <- arg2 - arg0 - M[TMI] (if (AC < 0) then not within bound)
+			BUN R_CHK2		/ goto R_CHK2
+
 R_CHK1,
-		ISZ CHK_DGT		/ ++M[CHK_DGT]
+			ISZ CHK_DGT		/ ++M[CHK_DGT]
+
 R_CHK2,
-		ISZ CHK_DGT		/ ++M[CHK_DGT]
-		BUN CHK_DGT I	/ return from CHK_DGT
+			ISZ CHK_DGT		/ ++M[CHK_DGT]
+			BUN CHK_DGT I	/ return from CHK_DGT
 
 ////////// subroutine (write Z to ZMG) //////////
 WRITE_Z,	HEX 0		/ return address
@@ -269,22 +271,22 @@ WRITE_Z,	HEX 0		/ return address
 			/LDA Y
 			STA Z
 PUT_DGT,
-		LDA Z			/ AC <- M[Z]
-		BSA DV10
-		LDA R_0
-		ADD CH_0		/ AC <- (M[Z] & 000f) + '0'
+			LDA Z			/ AC <- M[Z]
+			BSA DV10
+			LDA R_0
+			ADD CH_0		/ AC <- (M[Z] & 000f) + '0'
 STR_DGT,
-		STA TMA I		/ M[M[TMA]] <- AC
-		LDA P
-		STA Z			/ M[Z] <- M[Z] >> 4
-		CLA
-		STA P
-		LDA TMA			/ AC <- M[TMA]
-		ADD VM1			/ AC <- M[TMA] - 1
-		STA TMA			/ M[TMA] <- M[TMA] - 1
-		ISZ CNT_Z		/ ((++M[CNT_Z]) = 0) ? skip next
-		BUN PUT_DGT		/ goto PUT_DGT
-		BUN WRITE_Z I	/ return from OUT_Z
+			STA TMA I		/ M[M[TMA]] <- AC
+			LDA P
+			STA Z			/ M[Z] <- M[Z] >> 4
+			CLA
+			STA P
+			LDA TMA			/ AC <- M[TMA]
+			ADD VM1			/ AC <- M[TMA] - 1
+			STA TMA			/ M[TMA] <- M[TMA] - 1
+			ISZ CNT_Z		/ ((++M[CNT_Z]) = 0) ? skip next
+			BUN PUT_DGT		/ goto PUT_DGT
+			BUN WRITE_Z I	/ return from OUT_Z
 
 // compute TMX % 10 -> P, R
 DV10,	HEX 0
@@ -467,7 +469,6 @@ VM5,	DEC -5		/ VM5 = -5
 VM10,	DEC -10		/ VM10 = -10
 CH_0,	HEX 30		/ '0'
 CH_NL,	HEX 0A		/ '\n' (newline : line feed)
-CH_CR,	HEX 0D		/ '\r' (carrage return : appears on DOS)
 A_ZMG,	SYM ZMG
 CNT_ZMG,DEC -5		/ CNT_ZMG = -5
 ZMG,	HEX 0		/ hex digit 4
