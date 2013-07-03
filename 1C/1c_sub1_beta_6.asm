@@ -460,6 +460,7 @@ RE_Y,
 		STA _Y
 		BUN CHK_Y
 
+// compute N % Y -> R
 GETR,	HEX 0
 		LDA _N
 		STA LAST
@@ -477,11 +478,6 @@ GETR,	HEX 0
 		BUN DV
 		BUN DV10_1
 
-// compute N % Y -> R
-/GETR,	HEX 0
-/		LDA _N
-/		STA LAST	/ store the recent N to LAST
-/		STA _X		
 DV,		/ X % Y
 		LDA _X
 		STA _R		/ M[R] <- AC
