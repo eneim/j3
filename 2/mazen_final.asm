@@ -17,7 +17,7 @@ INI, / initialize data
 		LDA VH2			/ AC <- 2
 		BSA SET_ML		/ call SET_ML (set message list)
 		SYM MG_WELC		/ "WELCOME TO MAZE'N MATH!"		
-		SYM MG_SEL		/ "\nselect level (1[easy], 2[normal], 3[hard], 4[tsubame], )\n"
+		SYM MG_SEL		/ "\nselect level (1[easy], 2[normal], 3[hard], 4[tsubame], 5[maze], q[quit])\n"
 
 	/ setup IO registers
 		LDA VH4			/ AC <- 4
@@ -55,7 +55,7 @@ I_HND,
 		BUN IRT
 		CLA				/ AC      <- 0
 		INP				/ AC[7:0] <- INPR
-		STA TMP_IN
+		STA TMP_IN		/ input temporary var
 
 /////////// state switch : M[STT] = 0, 1, 2 ///////////
 
@@ -75,10 +75,19 @@ STT_SW,
 END_MM,
 		LDA VH1			/ AC         <- 1
 		BSA SET_ML		/ call SET_ML (set message list)
-		SYM MG_BYE		/ (arg1) "bye-bye!"
+		SYM MG_BYE		/ "bye-bye!"
 		STA NXT_BYE		/ M[NXT_BYE] <- 1
 		BUN PRP_OUT		/ goto PRP_OUT (prepare output)
 
+END_MM2,
+		CLA
+		STA CNT_N
+		LDA VH1
+		STA X
+		BSA CHK_CLR
+		BSA RESET
+		BUN PRP_OUT
+		
 /////////// return from interrupt handler ///////////
 IRT,	
 		LDA BE			/ AC  <- M[BE]
@@ -101,7 +110,7 @@ STT_0,
 / check input number (1 <= M[TMP_IN] <= 3)
 		LDA CH_Q
 		BSA CHK_CH
-		SZA				/ IS_QUIT return AC != 0 if "q" is pressed
+		SZA				/ input != 'q' then skip next step (End game)
 		BUN END_MM
 		LDA CH_1		/ AC <- '1'
 		CMA
@@ -114,46 +123,47 @@ STT_0,
 		BUN END_MM		/ goto END_MM (end maze'math : M[TMP_IN] >= '5')
 		ADD VH1
 		SNA				/ (M[TMP_IN] < 5) ? skip next
-		BUN SELECT_BRD5		/ goto SELECT_BRD5 (level 5 : M[TMP_IN] = 5)
+		BUN SELECT_BRD5	/ goto SELECT_BRD5 (level 5 : M[TMP_IN] = 5)
 		ADD VH1			
 		SNA				/ (M[TMP_IN] < 4) ? skip next
-		BUN SELECT_BRD4		/ goto SELECT_BRD4 (level 4 : M[TMP_IN] = 4)
+		BUN SELECT_BRD4	/ goto SELECT_BRD4 (level 4 : M[TMP_IN] = 4)
 		ADD VH1
-		SNA					/ (M[TMP_IN] < 3) ? skip next
-		BUN SELECT_BRD3		/ goto SELECT_BRD3 (level 3 : M[TMP_IN] = 3)
+		SNA				/ (M[TMP_IN] < 3) ? skip next
+		BUN SELECT_BRD3	/ goto SELECT_BRD3 (level 3 : M[TMP_IN] = 3)
 		ADD VH1
-		SNA					/ (M[TMP_IN] < 2) ? skip next
-		BUN SELECT_BRD2		/ goto SELECT_BRD2 (level 2 : M[TMP_IN] = 2)
-		BUN SELECT_BRD1		/ goto SELECT_BRD1 (level 1 : M[TMP_IN] = 1)
+		SNA				/ (M[TMP_IN] < 2) ? skip next
+		BUN SELECT_BRD2	/ goto SELECT_BRD2 (level 2 : M[TMP_IN] = 2)
+		BUN SELECT_BRD1	/ goto SELECT_BRD1 (level 1 : M[TMP_IN] = 1)
 	
-SELECT_BRD5,	
+SELECT_BRD5,	/ "maze" /
 		/set board
 		BSA S_CPY_BRD
-		SYM BRD5		/ copy problem board BRD1 to process board BRD
+		SYM BRD5		/ copy problem board BRD5 to process board BRD
 		
 		BSA SET_PROB	/ set problem (X value and X position)
-		SYM PROB5		/ set PROB1
+		SYM PROB5		/ set PROB5
 		
 		/init
 		BUN INIT_CLR
 		
-SELECT_BRD4,	
+SELECT_BRD4,	/ "tsubame" /
 		/set board
 		BSA S_CPY_BRD
-		SYM BRD4		/ copy problem board BRD1 to process board BRD
+		SYM BRD4		/ copy problem board BRD4 to process board BRD
 		
 		BSA SET_PROB	/ set problem (X value and X position)
-		SYM PROB4		/ set PROB1
+		SYM PROB4		/ set PROB4
 		
 		/init
 		BUN INIT_CLR
+		
 SELECT_BRD3,	
 		/set board
 		BSA S_CPY_BRD
-		SYM BRD3		/ copy problem board BRD1 to process board BRD
+		SYM BRD3		/ copy problem board BRD3 to process board BRD
 		
 		BSA SET_PROB	/ set problem (X value and X position)
-		SYM PROB3		/ set PROB1
+		SYM PROB3		/ set PROB3
 		
 		/init
 		BUN INIT_CLR
@@ -161,10 +171,10 @@ SELECT_BRD3,
 SELECT_BRD2,
 		/set board
 		BSA S_CPY_BRD
-		SYM BRD2		/ copy problem board BRD1 to process board BRD
+		SYM BRD2		/ copy problem board BRD2 to process board BRD
 		
 		BSA SET_PROB	/ set problem (X value and X position)
-		SYM PROB2		/ set PROB1
+		SYM PROB2		/ set PROB2
 		
 		/init
 		BUN INIT_CLR
@@ -178,64 +188,68 @@ SELECT_BRD1,
 		SYM PROB1		/ set PROB1
 		
 		/init
-		BUN INIT_CLR
+		/BUN INIT_CLR
 				
 INIT_CLR,
 /initialize clear
-		CLA				/AC <- 0
-		STA CLEAR		/M[CLEAR] <- 0
-		LDA VH1			/AC <- 1
+		LDA VH1			/ AC <- 1
 		STA NXT_STT		/M[NXT_STT] <- 1 (next state : get your move)
 		STA NXT_INP		/M[INP]     <- 1 (change to input state after output process)
 		BSA SHOW_GAME
 		BUN PRP_OUT
 
-///////// M[STT] = 1 : get move (must satisfy: M[TMP_IN] = 'w'|'a'|'s'|'d')  /////////
+///////// M[STT] = 1 : get move (must satisfy: M[TMP_IN] = 'w'|'a'|'s'|'d'|'q')  /////////
 
 STT_1,
 		LDA P_X
 		ADD VP1
-		STA TMP_X
+		STA TMP_X		/ temp for P_X
 		
-/ check input data
-/ (prev-operator = 'w') ?
+/ check input
+/ (input = 'w') ?
 		LDA CH_W		/ AC <- M[CH_W] ('w')
 		BSA CHK_CH		/ call CHK_CH
 		SZA				/ (AC = 0) ? skip next(not 'w')
 		BUN Z_UP		/ goto Z_UP
 
-/ (prev-operator = 's') ?
+/ (input = 's') ?
 		LDA CH_S		/ AC <- M[CH_S] ('s')
 		BSA CHK_CH		/ call CHK_CH
 		SZA				/ (AC = 0) ? skip next(not 's')
 		BUN Z_DOWN		/ goto Z_DOWN
 
-/ (prev-operator = 'a') ?
+/ (input = 'a') ?
 		LDA CH_A		/ AC <- M[CH_A] ('a')
 		BSA CHK_CH		/ call CHK_CH
 		SZA				/ (AC = 0) ? skip next(not 'a')
 		BUN Z_LEFT		/ goto Z_LEFT
 
-/ (prev-operator = 'd') ?
+/ (input = 'd') ?
 		LDA CH_D		/ AC <- M[CH_D] ('d')
 		BSA CHK_CH		/ call CHK_CH
 		SZA				/ (AC = 0) ? skip next(not 'd')
 		BUN Z_RIGHT		/ goto Z_RIGHT
 
-/ (prev-operator is unsupported) ?
+/ (input = 'q') ?
+		LDA CH_Q
+		BSA CHK_CH
+		SZA
+		BUN END_MM2
+		
+/ (input char is unsupported) ?
 /		BUN NG_YM		/ goto NG_YM (your move is invalid : invalid position)
 
 NG_YM, 	/ your move is invalid
 		LDA VH8			/ AC     <- 1
 		BSA SET_ML		/ call SET_ML (set message list)
-		SYM MG_SEPR		/ (arg1) MG_SEPR
-		SYM BRD			/ (arg2) MB_BRD
-		SYM MG_SEPR		/ (arg3) MG_SEPR
-		SYM X_OUT		/ (arg4) X_OUT
-		SYM X_MG
-		SYM MG_NL
-		SYM MG_SEPR		/ (arg5) MG_SEPR
-		SYM MG_IVMV		/ (arg1) "invalid move!"		
+		SYM MG_SEPR		/ "-----"
+		SYM BRD			/ board
+		SYM MG_SEPR		/ "-----"
+		SYM X_OUT		/ "X: "
+		SYM X_MG		/ value of X in decimal: ****
+		SYM MG_NL		/ line feed
+		SYM MG_SEPR		/ "-----"
+		SYM MG_IVMV		/ "invalid move!"		
 		LDA VH1			/ AC     <- 1
 		STA NXT_INP		/ M[INP] <- 1
 		BUN PRP_OUT		/ goto PRP_OUT (prepare output)
@@ -243,29 +257,32 @@ NG_YM, 	/ your move is invalid
 / applying changes to player's move
 
 Z_LEFT,
+		/ backup some information
 		LDA X_ROW
 		STA OLD_ROW
 		LDA X_COL
 		STA OLD_COL
-
+		
+		/ check the move and change P_X_NXT
 		ADD VM2			/ AC <- X_COL - 2
 		STA TMX			/ TMX <- X_COL - 2
 		SPA				/ X_COL - 2 >= 0 then skip next step
 		BUN NG_YM		/ invalid move (over left)
 		LDA TMX
 		STA X_COL		/ valid move : X_COL <- X_COL (old) - 2
-		/BSA POS_X		/ goto POS_X to calculate P_X_NXT (next position of X), POS_X return AC -> P_X_NXT
 		LDA TMP_X
 		ADD VM2
 		STA P_X_NXT		/ P_X_NXT <- AC
 		BUN MAIN		/ goto MAIN
 
 Z_RIGHT,
+		/ backup some information
 		LDA X_ROW
 		STA OLD_ROW
 		LDA X_COL
 		STA OLD_COL
-
+		
+		/ check the move and change P_X_NXT
 		ADD VP2			/ AC <- X_COL + 2
 		STA TMX			/ TMX <- X_COL + 2
 		CMA				
@@ -275,25 +292,25 @@ Z_RIGHT,
 		BUN NG_YM		/ invalid move : over right
 		LDA TMX
 		STA X_COL		/ valid move : X_COL <- X_COL (old) + 2
-		/BSA POS_X		/ goto POS_X to calculate P_X_NXT (next position of X), POS_X return AC -> P_X_NXT
 		LDA TMP_X
 		ADD VH2
 		STA P_X_NXT		/ P_X_NXT <- AC
 		BUN MAIN		/ goto MAIN
 
 Z_UP,
+		/ backup some information
 		LDA X_COL
-		STA OLD_COL
+		STA OLD_COL		
 		LDA X_ROW
 		STA OLD_ROW
-
+		
+		/ check the move and change P_X_NXT
 		ADD VM2			/ AC <- X_ROW - 2
 		STA TMX			/ TMX <- X_ROW - 2
 		SPA				/ X_ROW - 2 >= 0 then skip next step
 		BUN NG_YM		/ invalid move : over up
 		LDA TMX
 		STA X_ROW		/ valid move : X_ROW <- X_ROW (old) - 2
-		/BSA POS_X		/ goto POS_X to calculate P_X_NXT (next position of X), POS_X return AC -> P_X_NXT
 		LDA COL
 		ADD COL
 		CMA
@@ -303,11 +320,13 @@ Z_UP,
 		BUN MAIN		/ goto MAIN
 
 Z_DOWN,
+		/ backup some information
 		LDA X_COL
-		STA OLD_COL
+		STA OLD_COL		
 		LDA X_ROW
 		STA OLD_ROW
-
+		
+		/ check the move and change P_X_NXT
 		ADD VP2			/ AC <- X_ROW + 2
 		STA TMX			/ TMX <- X_ROW + 2
 		CMA
@@ -317,7 +336,6 @@ Z_DOWN,
 		BUN NG_YM		/ invalid move : over down
 		LDA TMX			
 		STA X_ROW		/ valid move : X_ROW <- X_ROW (old) + 2
-		/BSA POS_X		/ goto POS_X to calculate P_X_NXT (next position of X), POS_X return AC -> P_X_NXT
 		LDA TMP_X
 		ADD COL
 		ADD COL
@@ -361,13 +379,13 @@ RESET,	HEX 0
 SHOW_GAME, HEX 0		/ return address
 		LDA VH7			/ AC <- 4
 		BSA SET_ML		/ call SET_ML (set message list)
-		SYM MG_SEPR		/ (arg1) MG_SEPR
-		SYM BRD			/ (arg2) MB_BRD
-		SYM MG_SEPR		/ (arg3) MG_SEPR
-		SYM X_OUT		/ (arg4) X_OUT
-		SYM X_MG
-		SYM MG_NL
-		SYM MG_SEPR		/ (arg5) MG_SEPR
+		SYM MG_SEPR		/ "-----"
+		SYM BRD			/ board
+		SYM MG_SEPR		/ "-----"
+		SYM X_OUT		/ "X: "
+		SYM X_MG		/ value of X in decimal: ****
+		SYM MG_NL		/ line feed
+		SYM MG_SEPR		/ "-----"
 		BUN SHOW_GAME I	/ return from SHOW_GAME
 
 ///////////// end : SHOW_GAME ////////////////
@@ -376,23 +394,23 @@ SHOW_GAME, HEX 0		/ return address
 
 CHK_CLR, HEX 0
 		/ check CNT_N and X
-		LDA CNT_N		/AC <- M[CNT_N]
-		SZA			/(M[CNT_N] = 0) ? skip next
-		BUN NXT_TURN		/go to NXT_TURN
-		BUN END_TURN		/go to END_TURN
+		LDA CNT_N		/ AC <- M[CNT_N]
+		SZA				/ (M[CNT_N] = 0) ? skip next, goto END_TURN
+		BUN NXT_TURN	/ go to NXT_TURN
+		BUN END_TURN	/ go to END_TURN
 
 NXT_TURN,
-		LDA VH1		/AC <- 1
-		STA NXT_STT		/M[NXT_STT] <- 1
-		STA NXT_INP
+		LDA VH1			/ AC <- 1
+		STA NXT_STT		/ M[NXT_STT] <- 1
+		STA NXT_INP		/ M[NXT_INP] <- 1
 		BSA SHOW_GAME
 		BUN CHK_CLR I
 
 END_TURN,
 		CLA
-		STA NXT_INP
+		STA NXT_INP		/ M[NXT_INP] <- 0
 		LDA VH2
-		STA NXT_STT
+		STA NXT_STT		/ M[NXT_STT] <- 2
 		BSA SHOW_GAME
 		BUN CHK_CLR I		
 
@@ -402,30 +420,30 @@ END_TURN,
 // jump here after CNT_N turns 0
 
 STT_2,
-/you clear the game
+/ check if you cleared the game or you lost
 		LDA X			/ CNT_N = 0 then check if X = 0 or not
 		SZA				/ X = 0 then skip next step
 		BUN YOU_LOSE	/ go to YOU_LOSE (game over)
 
 YOU_WIN, / label, comparing with "YOU_LOSE"
-		LDA A_MG_CLR	/AC <- M[A_MG_CLR]("clear the game"!)
-		STA RESULT		/M[RESULT] <- "clear the game!"
-		BUN STT_2_1		/go to STT_2_1
+		LDA A_MG_CLR	/ AC <- M[A_MG_CLR]("clear the game"!)
+		STA RESULT		/ M[RESULT] <- "clear the game!"
+		BUN STT_2_1		/ go to STT_2_1
 
 YOU_LOSE,	
-		LDA A_MG_GMO	/AC <- M[A_MG_GMO]("game over!")
-		STA RESULT		/M[RESULT] <- "game over!"
+		LDA A_MG_GMO	/ AC <- M[A_MG_GMO]("game over!")
+		STA RESULT		/ M[RESULT] <- "game over!"
 		/ BUN STT_2_1 (just to remind)
 		
 STT_2_1,
-		LDA VH2			/AC <- 2
-		BSA SET_ML		/call SET_ML (set message list)
-RESULT,	HEX 0			/(arg1) "game over!" or "clear the game!"
-		SYM MG_SEL		/(arg2) "select level ..."
-		LDA VH1			/AC <- 1
-		STA NXT_INP		/M[INP] <- 1
-		CLA				/AC <- 0
-		STA NXT_STT		/M[NXT_STT] <- 0
+		LDA VH2			/ AC <- 2
+		BSA SET_ML		/ call SET_ML (set message list)
+		RESULT,	HEX 0			/ "game over!" or "clear the game!"
+		SYM MG_SEL		/ "select level ..."
+		LDA VH1			/ AC <- 1
+		STA NXT_INP		/ M[INP] <- 1
+		CLA				/ AC <- 0
+		STA NXT_STT		/ M[NXT_STT] <- 0
 		BUN PRP_OUT
 
 ////////////////////------------------------//////////////////////
@@ -434,16 +452,16 @@ RESULT,	HEX 0			/(arg1) "game over!" or "clear the game!"
 
 S_CPY_BRD,	HEX 0
 			LDA S_CPY_BRD I		/ load arg1 : pointer to the problem board
-			STA TMP_CPY			/ TMP_CPY <- M[BRD?]
+			STA TMP_CPY			/ TMP_CPY <- M[BRD~]
 		
 			LDA A_BRD
-			STA CPY_BRD
+			STA CPY_BRD			/ turn to use CPY_BRD pointer
 		
-			LDA TMP_CPY I		/ BRD?[0] : lenght of the board
+			LDA TMP_CPY I		/ BRD~[0] : lenght of the board
 			STA CPY_BRD I		/ store to BRD[0]
 			CMA
 			INC					/ AC <- - BRD?[0] (length of board)
-			STA TMP_CNT			/ TMP_CNT <- - (length of BRD?)
+			STA TMP_CNT			/ temporary counter, TMP_CNT <- - (length of BRD?)
 			ISZ TMP_CPY
 			ISZ CPY_BRD
 	L_CPY,	/ loop for copy process
@@ -452,7 +470,7 @@ S_CPY_BRD,	HEX 0
 			ISZ TMP_CPY
 			ISZ CPY_BRD
 			ISZ TMP_CNT			/ temporary counter
-			BUN L_CPY			/ goto L_CPY
+			BUN L_CPY			/ TMP_CNT != 0 then goto L_CPY
 			BUN S_CPY_BRD I		/ return from S_CPY_BRD
 
 ////////////////////////// end : S_CPY_BRD //////////////////////////
@@ -472,7 +490,7 @@ SET_PROB,	HEX 0
 		
 		ISZ TMP_PROB
 		LDA TMP_PROB I
-		STA X_COL			/ line 3: X_RCOL
+		STA X_COL			/ line 3: X_COL
 		
 		ISZ TMP_PROB
 		LDA TMP_PROB I
@@ -484,11 +502,11 @@ SET_PROB,	HEX 0
 		
 		ISZ TMP_PROB
 		LDA TMP_PROB I
-		STA COL			/ line 6 : COL
+		STA COL				/ line 6 : COL
 
 		ISZ TMP_PROB
 		LDA TMP_PROB I
-		STA ROW			/ line 7 : ROW
+		STA ROW				/ line 7 : ROW
 		
 		BUN SET_PROB I
 
@@ -502,48 +520,11 @@ CHK_CH,	HEX 0			/ return address
 / return AC = 0 : character not matched
 		CMA				/ AC <- ~AC
 		INC				/ AC <- AC + 1 (AC = - arg0)
-		ADD TMP_IN			/ AC <- AC + M[TMP_IN] (M[TMP_IN] - arg0)
+		ADD TMP_IN		/ AC <- AC + M[TMP_IN] (M[TMP_IN] - arg0)
 		SZA				/ (M[TMP_IN] = arg0) ? skip next
 		LDA VM1			/ AC <- M[VM1] (-1) (no match)
 		INC				/ AC <- AC + 1
-		BUN CHK_CH I			/ return from CHK_CH
-
-/////////// sub: POS_X - calculate P_X_NXT from X_COL and X_ROW ////////////
-POS_X,	HEX 0
-	BSA MULTI		/ COL * X_ROW
-	LDA P			/ P = COL * X_ROW
-	ADD X_COL
-	ADD VP1			/ AC <- COL * X_ROW + X_COL + 1
-	BUN POS_X I
-	
-/////////// sub: MULTI ///////////
-MULTI,	HEX 0
-		LDA COL
-		STA B
-		LDA X_ROW
-		STA A
-	L,
-		CLE
-		LDA B
-		SZA
-		BUN LY
-		BUN MULTI I
-	LY,
-		CIR
-		STA B
-		SZE
-		BUN LP
-	LX,
-		LDA A
-		CIL
-		STA A
-		BUN L
-	LP,
-		LDA A
-		ADD P
-		STA P
-		CLE
-		BUN LX
+		BUN CHK_CH I	/ return from CHK_CH
 		
 //////////// RENEW_X : renew X /////////////
 ///// P_X: recent pointer of X
@@ -553,8 +534,8 @@ RENEW_X, HEX 0
 		CMA
 		INC
 		ADD A_BRD I
-		SNA			/ A_BRD[0] < P_X_NXT then skip next
-		BUN KEEPGOIN0
+		SNA				/ length of BRD < P_X_NXT then skip next
+		BUN KEEPGOIN0	/ P_X_NXT <= length then keep going
 		BUN ROLLBCK
 		
 	KEEPGOIN0,
@@ -578,9 +559,9 @@ RENEW_X, HEX 0
 		STA TMP
 		CMA
 		INC
-		ADD CH_SP
-		SZA		
-		BUN KEEPGOIN1		/ TMP != CH_SP then keep going
+		ADD CH_SP		
+		SZA				/ M[P_X_NXT] = space then rollback
+		BUN KEEPGOIN1	/ TMP != CH_SP then keep going
 		BUN ROLLBCK		
 
 	KEEPGOIN1,
@@ -620,6 +601,7 @@ RENEW_X, HEX 0
 		LDA OLD_COL
 		STA X_COL
 		
+		/ output a message to notice the invalid move
 		LDA VH8			/ AC     <- 1
 		BSA SET_ML		/ call SET_ML (set message list)
 		SYM MG_SEPR		/ (arg1) MG_SEPR
@@ -877,10 +859,10 @@ VM6,	DEC -6
 VM8,	DEC -8		/ VM2 = -8
 VM9,	DEC -9		/ VM2 = -9
 VM10,	DEC -10		/ VM10 = -10
-VP1, DEC 1
-VP2, DEC 2
-VP4, DEC 4
-VP5, DEC 5
+VP1, 	DEC 1
+VP2, 	DEC 2
+VP4, 	DEC 4
+VP5, 	DEC 5
 CH_0,	CHR 0
 CH_1,	CHR 1
 CH_W,	CHR w
@@ -890,7 +872,6 @@ CH_D,	CHR d
 CH_Q,	CHR q
 CH_X,	CHR X
 CH_SP, HEX 20
-/CH_X,	HEX FF
 CH_NL, HEX A
 
 MG_WELC,DEC 25	/ MG_W/ set start message
@@ -949,21 +930,19 @@ MG_GMO,	DEC 11	/ MG_GMO length
 		HEX 0A	/ '\n'
 		
 A_MG_CLR, SYM MG_CLR
-MG_CLR,	DEC 16	/ MG_CLR length
+MG_CLR,	DEC 15	/ MG_CLR length
+		CHR g
+		CHR a
+		CHR m
+		CHR e
+		HEX 20	/' '
 		CHR c
 		CHR l
 		CHR e
 		CHR a
 		CHR r
-		HEX 20	/' '
-		CHR t
-		CHR h
 		CHR e
-		HEX 20	/' '
-		CHR g
-		CHR a
-		CHR m
-		CHR e
+		CHR d
 		CHR !
 		HEX 0A	/ '\n'
 
@@ -1059,7 +1038,6 @@ MG_SEL,DEC 74	/ MG_SEL length
 		CHR ]
 		CHR )
 		HEX 0A	/ '\n'
-/MAZE'N MATH
 
 MG_SEPR,DEC 6	/ MG_SEPR length
 		CHR -
@@ -1074,28 +1052,6 @@ P_X,		DEC 0
 P_X_NXT,	DEC 0
 X,			DEC 0
 
-P_X_OUT,	SYM X_OUT
-A_X_OUT,	SYM X_OUT
-X_OUT,	DEC 3
-		CHR X
-		CHR :
-		HEX 20	/ ' '
-		/CHR 0
-		/CHR 0
-		/CHR 0
-		/CHR 0
-		/HEX 0A	/ '\n'
-
-// array to store decimal value of X
-CNT_X,	DEC 0
-P_X_MG,	SYM X_MG
-A_X_MG,	SYM X_MG
-X_MG,	DEC 4
-	CHR 0
-	CHR 0
-	CHR 0
-	CHR 0
-
 X_COL,	DEC 0
 X_ROW,	DEC 0
 
@@ -1104,7 +1060,24 @@ OLD_ROW,	DEC 0
 
 COL,		DEC 0
 ROW,		DEC 0
-CNT_N,	DEC 0
+CNT_N,		DEC 0
+
+P_X_OUT,	SYM X_OUT
+A_X_OUT,	SYM X_OUT
+X_OUT,	DEC 3
+		CHR X
+		CHR :
+		HEX 20	/ ' '
+
+// array to store decimal value of X
+CNT_X,	DEC 0
+P_X_MG,	SYM X_MG
+A_X_MG,	SYM X_MG
+X_MG,	DEC 4
+		CHR 0
+		CHR 0
+		CHR 0
+		CHR 0
 
 ///////// problems /////////
 
@@ -1164,8 +1137,8 @@ PROB2,
 		DEC 2	/ X_COL
 		DEC 4	/ X_ROW
 		DEC -8	/ CNT_N
-		DEC 8		/ COL
-		DEC 9		/ ROW
+		DEC 8	/ COL
+		DEC 9	/ ROW
 
 P_BRD2,	SYM BRD2	/ MAZ
 BRD2,	DEC 72
@@ -1259,8 +1232,8 @@ PROB3,
 		DEC 6	/ X_COL
 		DEC 6	/ X_ROW
 		DEC -20	/ CNT_N
-		DEC 14		/ COL
-		DEC 13		/ ROW
+		DEC 14	/ COL
+		DEC 13	/ ROW
 
 P_BRD3,	SYM BRD3	/ MAZ
 BRD3,	DEC 182
@@ -1471,7 +1444,7 @@ PROB4,
 		DEC 18		/ COL
 		DEC 17	/ ROW
 
-P_BRD4,	SYM BRD4	/ MAZ
+P_BRD4,	SYM BRD4	/ TSUBAME
 BRD4,	DEC 306
 
 		CHR 0		
@@ -1797,6 +1770,8 @@ BRD4,	DEC 306
 		CHR 0		
 		HEX 0A	/ '\n'
 
+/// BRD5 setup data ///
+
 PROB5,
 		DEC 0	/ X
 		DEC 0	/ start point of X1
@@ -1806,7 +1781,7 @@ PROB5,
 		DEC 18		/ COL
 		DEC 17	/ ROW
 
-P_BRD5,	SYM BRD4	/ MAZ
+P_BRD5,	SYM BRD4	/ MAZE
 BRD5,	DEC 306
 
 		CHR X
