@@ -604,14 +604,14 @@ RENEW_X, HEX 0
 		/ output a message to notice the invalid move
 		LDA VH8			/ AC     <- 1
 		BSA SET_ML		/ call SET_ML (set message list)
-		SYM MG_SEPR		/ (arg1) MG_SEPR
-		SYM BRD			/ (arg2) MB_BRD
-		SYM MG_SEPR		/ (arg3) MG_SEPR
-		SYM X_OUT		/ (arg4) X_OUT
+		SYM MG_SEPR		/ MG_SEPR
+		SYM BRD			/ MB_BRD
+		SYM MG_SEPR		/ MG_SEPR
+		SYM X_OUT		/ X_OUT
 		SYM X_MG
 		SYM MG_NL
-		SYM MG_SEPR		/ (arg5) MG_SEPR
-		SYM MG_IVMV		/ (arg1) "invalid move!"		
+		SYM MG_SEPR		/ MG_SEPR
+		SYM MG_IVMV		/ "invalid move!"		
 		
 		LDA VH1			/ AC     <- 1
 		STA NXT_INP		/ M[INP] <- 1
@@ -644,7 +644,7 @@ CMPR_1,
 ///////////////// end : CMPR ///////////////////
 
 ////////// subroutine (write X to X_MG) //////////
-WRITE_X,	HEX 0		/ return address
+WRITE_X,	HEX 0			/ return address
 		LDA P_X_MG
 		ADD VH4
 		STA TMX2
@@ -673,16 +673,16 @@ STR_DGT,
 // compute TMX % 10 -> P_X_, R_X
 DV10,	HEX 0
 		STA TMR
-LOP,	STA R_X		/ M[R] <- AC
+LOP,	STA R_X				/ M[R] <- AC
 		ADD VM10	
-		STA TMR	/ X <- AC
-		ISZ P_X2		/ M[P]++
-		SNA		/ if (AC < 0) then skip next step
-		BUN LOP	/ goto to LOP
-		CLA		/ AC <- 0	
-		LDA P_X2		/ AC <- M[P]
-		ADD VM1	/ AC <- AC - 1
-		STA P_X2		/ M[P] <- AC
+		STA TMR				/ X <- AC
+		ISZ P_X2			/ M[P]++
+		SNA					/ if (AC < 0) then skip next step
+		BUN LOP				/ goto to LOP
+		CLA					/ AC <- 0	
+		LDA P_X2			/ AC <- M[P]
+		ADD VM1				/ AC <- AC - 1
+		STA P_X2			/ M[P] <- AC
 		BUN DV10 I
 
 ////////// SET_ML : set messages ///////////
@@ -1094,63 +1094,63 @@ PROB1,
 P_BRD1,	SYM BRD1	/ MAZ
 BRD1,	DEC 30
 
-		CHR 0			/ 0
-		HEX 20	/ ' '	/ 1
-		CHR 0			/ 2
-		HEX 20		/ 2
-		CHR 1			/ 4
-		HEX 0A	/ '\n'	/ 5
+		CHR 0
+		HEX 20
+		CHR 0
+		HEX 20
+		CHR 1
+		HEX 0A
 		
-		HEX 20/ 6
-		HEX 20	/ 7
-		HEX 20	/ 8
-		HEX 20	/ 9
-		HEX 20	/ 10
-		HEX 0A	/ '\n'	/ 11
+		HEX 20
+		HEX 20
+		HEX 20
+		HEX 20
+		HEX 20
+		HEX 0A
 		
-		CHR X			/ 12
-		HEX 20		/ 13
-		CHR 0			/ 14
-		HEX 20		/ 15
-		CHR 2			/ 16
-		HEX 0A	/ '\n'  / 17
+		CHR X
+		HEX 20
+		CHR 0
+		HEX 20
+		CHR 2
+		HEX 0A
 		
-		HEX 20/ 18
-		HEX 20 18
-		HEX 20 18
-		HEX 20 18
-		HEX 20/ 18
-		HEX 0A	/ '\n'	/ 23
+		HEX 20
+		HEX 20
+		HEX 20
+		HEX 20
+		HEX 20
+		HEX 0A
 		
-		CHR 0			/ 24
-		HEX 20		/ 25
-		CHR 0			/ 26
-		HEX 20		/ 27
-		CHR 3			/ 28
-		HEX 0A	/ '\n'	/ 29		
+		CHR 0
+		HEX 20
+		CHR 0
+		HEX 20
+		CHR 3
+		HEX 0A
 		
 /// BRD2 setup data ///
 
 PROB2,
-		DEC 0	/ X
-		DEC 34	/ start point of X1
-		DEC 2	/ X_COL
-		DEC 4	/ X_ROW
-		DEC -8	/ CNT_N
-		DEC 8	/ COL
-		DEC 9	/ ROW
+		DEC 0		/ X
+		DEC 34		/ start point of X1
+		DEC 2		/ X_COL
+		DEC 4		/ X_ROW
+		DEC -8		/ CNT_N
+		DEC 8		/ COL
+		DEC 9		/ ROW
 
 P_BRD2,	SYM BRD2	/ MAZ
 BRD2,	DEC 72
 
 		CHR 2		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 0			
 		HEX 20
 		CHR 0
 		HEX 20
 		CHR 4		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1162,13 +1162,13 @@ BRD2,	DEC 72
 		HEX 0A
 		
 		CHR 1			
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 0			
 		HEX 20
 		CHR 0
 		HEX 20
 		CHR 2		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1180,13 +1180,13 @@ BRD2,	DEC 72
 		HEX 0A
 
 		CHR 0			
-		HEX 20	/ ' '	
+		HEX 20
 		CHR X			
 		HEX 20		
 		CHR 0
 		HEX 20
 		CHR 0		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1198,13 +1198,13 @@ BRD2,	DEC 72
 		HEX 0A
 	
 		CHR 4			
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 0			
 		HEX 20		
 		CHR 0
 		HEX 20
 		CHR 3		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1216,42 +1216,42 @@ BRD2,	DEC 72
 		HEX 0A
 
 		CHR 8			
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 0			
 		HEX 20		
 		CHR 0
 		HEX 20
 		CHR 6		
-		HEX 0A	/ '\n'
+		HEX 0A
 		
 /// BRD3 setup data ///
 
 PROB3,
-		DEC 0	/ X
-		DEC 90	/ start point of X1
-		DEC 6	/ X_COL
-		DEC 6	/ X_ROW
-		DEC -20	/ CNT_N
-		DEC 14	/ COL
-		DEC 13	/ ROW
+		DEC 0		/ X
+		DEC 90		/ start point of X1
+		DEC 6		/ X_COL
+		DEC 6		/ X_ROW
+		DEC -20		/ CNT_N
+		DEC 14		/ COL
+		DEC 13		/ ROW
 
 P_BRD3,	SYM BRD3	/ MAZ
 BRD3,	DEC 182
 
 		HEX 20
-		HEX 20	/ ' '	
 		HEX 20
 		HEX 20
 		HEX 20
-		HEX 20	/ ' '	
+		HEX 20
+		HEX 20
 		CHR 5			
 		HEX 20	
 		HEX 20
-		HEX 20	/ ' '	
 		HEX 20
 		HEX 20
 		HEX 20
-		HEX 0A	/ '\n'	/13
+		HEX 20
+		HEX 0A
 		
 		HEX 20			
 		HEX 20			
@@ -1266,10 +1266,10 @@ BRD3,	DEC 182
 		HEX 20			
 		HEX 20			
 		HEX 20						
-		HEX 0A	/ '\n'	/27
+		HEX 0A
 		
 		HEX 20
-		HEX 20	/ ' '	
+		HEX 20
 		HEX 20
 		HEX 20
 		CHR 4			
@@ -1277,11 +1277,11 @@ BRD3,	DEC 182
 		CHR 3			
 		HEX 20		
 		CHR 1		
-		HEX 20	/ ' '	
 		HEX 20
 		HEX 20
 		HEX 20
-		HEX 0A	/ '\n'  	/41
+		HEX 20
+		HEX 0A
 		
 		HEX 20			
 		HEX 20			
@@ -1296,10 +1296,10 @@ BRD3,	DEC 182
 		HEX 20			
 		HEX 20			
 		HEX 20						
-		HEX 0A	/ '\n'	/55
+		HEX 0A
 		
 		HEX 20
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 2		
 		HEX 20
 		HEX 20
@@ -1307,11 +1307,11 @@ BRD3,	DEC 182
 		CHR 1			
 		HEX 20		
 		HEX 20
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 3			
 		HEX 20
 		HEX 20
-		HEX 0A	/ '\n' 	/69
+		HEX 0A
 
 		HEX 20			
 		HEX 20			
@@ -1326,22 +1326,22 @@ BRD3,	DEC 182
 		HEX 20			
 		HEX 20			
 		HEX 20						
-		HEX 0A	/ '\n'	/83
+		HEX 0A
 
 		CHR 5		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 4		
 		HEX 20
 		CHR 2		
 		HEX 20	
-		CHR X				/90		
+		CHR X
 		HEX 20		
 		CHR 4		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 2			
 		HEX 20
 		CHR 5					
-		HEX 0A	/ '\n' 
+		HEX 0A
 
 		HEX 20			
 		HEX 20			
@@ -1356,10 +1356,10 @@ BRD3,	DEC 182
 		HEX 20			
 		HEX 20			
 		HEX 20						
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 1		
 		HEX 20
 		HEX 20
@@ -1367,11 +1367,11 @@ BRD3,	DEC 182
 		CHR 3			
 		HEX 20		
 		HEX 20
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 4			
 		HEX 20
 		HEX 20
-		HEX 0A	/ '\n' 
+		HEX 0A
 
 		HEX 20			
 		HEX 20			
@@ -1386,10 +1386,10 @@ BRD3,	DEC 182
 		HEX 20			
 		HEX 20			
 		HEX 20						
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
-		HEX 20	/ ' '	
+		HEX 20
 		HEX 20
 		HEX 20
 		CHR 3		
@@ -1397,11 +1397,11 @@ BRD3,	DEC 182
 		CHR 1			
 		HEX 20		
 		CHR 2		
-		HEX 20	/ ' '	
 		HEX 20
 		HEX 20
 		HEX 20
-		HEX 0A	/ '\n' 
+		HEX 20
+		HEX 0A
 
 		HEX 20			
 		HEX 20			
@@ -1416,10 +1416,10 @@ BRD3,	DEC 182
 		HEX 20			
 		HEX 20			
 		HEX 20						
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
-		HEX 20	/ ' '	
+		HEX 20
 		HEX 20
 		HEX 20
 		HEX 20
@@ -1427,28 +1427,28 @@ BRD3,	DEC 182
 		CHR 5			
 		HEX 20		
 		HEX 20
-		HEX 20	/ ' '	
+		HEX 20	
 		HEX 20
 		HEX 20
 		HEX 20
-		HEX 0A	/ '\n' 
+		HEX 0A	
 
 /// BRD4 setup data ///
 
 PROB4,
-		DEC 0	/ X
-		DEC 80	/ start point of X1
-		DEC 8	/ X_COL
-		DEC 4	/ X_ROW
-		DEC -19	/ CNT_N
+		DEC 0		/ X
+		DEC 80		/ start point of X1
+		DEC 8		/ X_COL
+		DEC 4		/ X_ROW
+		DEC -19		/ CNT_N
 		DEC 18		/ COL
-		DEC 17	/ ROW
+		DEC 17		/ ROW
 
 P_BRD4,	SYM BRD4	/ TSUBAME
 BRD4,	DEC 306
 
 		CHR 0		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 0			
 		HEX 20		
 		CHR 0
@@ -1464,7 +1464,7 @@ BRD4,	DEC 306
 		CHR 0
 		HEX 20
 		CHR 0		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1486,7 +1486,7 @@ BRD4,	DEC 306
 		HEX 0A
 
 		CHR 0		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 0			
 		HEX 20		
 		CHR 0
@@ -1502,7 +1502,7 @@ BRD4,	DEC 306
 		CHR 0
 		HEX 20
 		CHR 0		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1524,7 +1524,7 @@ BRD4,	DEC 306
 		HEX 0A
 	
 		CHR 0		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 3			
 		HEX 20		
 		CHR 3
@@ -1540,7 +1540,7 @@ BRD4,	DEC 306
 		CHR 3
 		HEX 20
 		CHR 0		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1562,7 +1562,7 @@ BRD4,	DEC 306
 		HEX 0A
 
 		CHR 0		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 1			
 		HEX 20		
 		CHR 0
@@ -1578,7 +1578,7 @@ BRD4,	DEC 306
 		CHR 1
 		HEX 20
 		CHR 0		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1600,7 +1600,7 @@ BRD4,	DEC 306
 		HEX 0A
 
 		CHR 0		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 2			
 		HEX 20		
 		CHR 0
@@ -1616,7 +1616,7 @@ BRD4,	DEC 306
 		CHR 2
 		HEX 20
 		CHR 0		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1638,7 +1638,7 @@ BRD4,	DEC 306
 		HEX 0A
 
 		CHR 0		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 0			
 		HEX 20		
 		CHR 0
@@ -1654,7 +1654,7 @@ BRD4,	DEC 306
 		CHR 0
 		HEX 20
 		CHR 0		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1676,7 +1676,7 @@ BRD4,	DEC 306
 		HEX 0A
 
 		CHR 0		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 0			
 		HEX 20		
 		CHR 0
@@ -1692,7 +1692,7 @@ BRD4,	DEC 306
 		CHR 0
 		HEX 20
 		CHR 0		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1714,7 +1714,7 @@ BRD4,	DEC 306
 		HEX 0A
 
 		CHR 0		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 0			
 		HEX 20		
 		CHR 1
@@ -1730,7 +1730,7 @@ BRD4,	DEC 306
 		CHR 0
 		HEX 20
 		CHR 0		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 		HEX 20
 		HEX 20
@@ -1752,7 +1752,7 @@ BRD4,	DEC 306
 		HEX 0A
 
 		CHR 0		
-		HEX 20	/ ' '	
+		HEX 20
 		CHR 0			
 		HEX 20		
 		CHR 0
@@ -1768,18 +1768,18 @@ BRD4,	DEC 306
 		CHR 0
 		HEX 20
 		CHR 0		
-		HEX 0A	/ '\n'
+		HEX 0A
 
 /// BRD5 setup data ///
 
 PROB5,
-		DEC 0	/ X
-		DEC 0	/ start point of X1
-		DEC 0	/ X_COL
-		DEC 0	/ X_ROW
-		DEC -56	/ CNT_N
+		DEC 0		/ X
+		DEC 0		/ start point of X1
+		DEC 0		/ X_COL
+		DEC 0		/ X_ROW
+		DEC -56		/ CNT_N
 		DEC 18		/ COL
-		DEC 17	/ ROW
+		DEC 17		/ ROW
 
 P_BRD5,	SYM BRD4	/ MAZE
 BRD5,	DEC 306
